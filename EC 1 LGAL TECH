@@ -1,0 +1,105 @@
+# calendario
+from datetime import datetime, timedelta
+
+# feriados
+feriados = ["01/01/2026", "02/04/2026", "03/04/2026", "01/05/2026", "07/06/2026", "29/06/2026", "23/07/2026", "28/07/2026", "29/07/2026", "06/08/2026", "30/08/2026", "08/10/2026", "01/11/2026", "08/12/2026", "09/12/2026", "25/12/2026"]
+
+# funcion para saber si un dia es habil
+def es_dia_habil(fecha):
+    fecha_texto = fecha.strftime("%d/%m/%Y")
+    if fecha_texto in feriados:
+        return False
+    if fecha.weekday() >= 5:
+        return False
+    return True
+
+# funcion para sumar dias habiles
+def sumar_dias_habiles(fecha, cantidad):
+    while cantidad > 0:
+        fecha = fecha + timedelta(days=1)
+        if es_dia_habil(fecha):
+            cantidad = cantidad - 1
+    return fecha
+
+# funcion para saber cuando empieza el plazo
+def obtener_inicio_plazo(fecha, tipo):
+    if tipo == "fisica":
+        return sumar_dias_habiles(fecha, 1)
+    elif tipo == "electronica":
+        return sumar_dias_habiles(fecha, 3)
+    else:
+        raise ValueError("Tipo de notificacion no valido. Use 'fisica' o 'electronica'.")
+
+# recursos penales y sus plazos
+recursos = [{"nombre": "casacion", "plazo": 10}, {"nombre": "apelacion sentencia", "plazo": 5}, {"nombre": "apelacion auto", "plazo": 3}, {"nombre": "queja", "plazo": 3}, {"nombre": "reposicion", "plazo": 2}]
+
+# funcion para buscar el plazo segun el recurso
+def determinar_plazo(nombre_recurso):
+    for item in recursos:
+        if nombre_recurso == item["nombre"]:
+            return item["plazo"]
+    return 0
+
+# consulta de plazos penales
+def consultar_plazos_penales():
+    print("=== CONSULTA DE PLAZOS PENALES ===")
+    print("Recursos disponibles:")
+    for item in recursos:
+        print("-", item["nombre"])
+    recurso_usuario = input("\nIngrese el recurso que desea consultar: ").strip().lower()
+    plazo = determinar_plazo(recurso_usuario)
+    if plazo <= 0:
+        print("\nRecurso incorrecto")
+        return
+    fecha_texto = input("Ingrese la fecha de notificacion (dd/mm/aaaa): ")
+    fecha = datetime.strptime(fecha_texto, "%d/%m/%Y")
+    tipo = input("Ingrese el tipo de notificacion (fisica/electronica): ").strip().lower()
+    try:
+        inicio = obtener_inicio_plazo(fecha, tipo)
+    except ValueError as error:
+        print("\n", error)
+        return
+    vencimiento = sumar_dias_habiles(inicio, plazo - 1)
+    print("\nRecurso:", recurso_usuario)
+    print("Plazo:", plazo, "dias")
+    print("Inicio:", inicio.strftime("%d/%m/%Y"))
+    print("Vencimiento:", vencimiento.strftime("%d/%m/%Y"))
+
+# consulta de plazos de investigacion
+def consultar_plazos_investigacion():
+    print("=== PLAZOS DE INVESTIGACION ===")
+    tipos = {"diligencias preliminares": 60, "investigacion simple": 120, "investigacion compleja": 240, "organizacion criminal": 1080}
+    print("Tipos disponibles:")
+    for tipo in tipos:
+        print("-", tipo)
+    tipo_usuario = input("\nIngrese el tipo de investigacion: ").strip().lower()
+    plazo = tipos.get(tipo_usuario)
+    if plazo is None:
+        print("Tipo de investigacion no reconocido")
+        return
+    fecha_texto = input("Ingrese la fecha de inicio (dd/mm/aaaa): ")
+    fecha_inicio = datetime.strptime(fecha_texto, "%d/%m/%Y")
+    fecha_final = fecha_inicio + timedelta(days=plazo)
+
+    print("Plazo:", plazo, "dias naturales")
+    print("Fecha final:", fecha_final.strftime("%d/%m/%Y"))
+
+# menu principal
+def main():
+    while True:
+        print("\nSeleccione una opcion:")
+        print("1. Consultar plazos penales")
+        print("2. Consultar plazos de investigacion")
+        print("3. Salir")
+
+        opcion = input("Opcion: ").strip()
+        if opcion == "1":
+            consultar_plazos_penales()
+        elif opcion == "2":
+            consultar_plazos_investigacion()
+        elif opcion == "3":
+            print("Gracias.")
+        else:
+            print("Opcion no valida.")
+if __name__ == "__main__":
+    main()
